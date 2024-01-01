@@ -3,7 +3,8 @@ use ncurses::*;
 
 const HEIGHT: usize = 32;
 const WIDTH : usize = 64;
-const RULES: [i32; 9] = [0,0,1,1,0,0,0,0,0];
+const RULES: [[i32; 9]; 2] = [[0, 0, 0, 1, 0, 0, 0, 0, 0], 
+                              [0, 0, 1, 1, 0, 0, 0, 0, 0]];
 
 fn print_board(board: &Vec<[i32; WIDTH]>) {
     for i in 0..HEIGHT {
@@ -23,10 +24,8 @@ fn fill_random_board(board: &mut Vec<[i32; WIDTH]>){
     let mut rng = rand::thread_rng();
     for i in 0..HEIGHT {
         for j in 0..WIDTH {
-            let is_alive = rng.gen_range(0..2);
-            if is_alive == 0 {
-                board[i][j] = 0;
-            } else {
+            let a: u32 = rng.gen();
+            if a % 2 == 0{ 
                 board[i][j] = 1;
             }
 
@@ -51,7 +50,7 @@ fn count_neighbours(board: &Vec<[i32; WIDTH]>, i: usize, j: usize) -> usize {
     count
 }
 
-fn count_dump(board: &Vec<[i32; WIDTH]>) {
+fn _count_dump(board: &Vec<[i32; WIDTH]>) {
     for i in 0..HEIGHT {
         for j in 0..WIDTH {
             if board[i][j] == 1 {
@@ -68,7 +67,7 @@ fn play(board: &mut Vec<[i32; WIDTH]>) -> Vec<[i32; WIDTH]> {
     for i in 0..HEIGHT {
         for j in 0..WIDTH {
             let count = count_neighbours(&board, i, j);
-            new_board[i][j] = RULES[count];
+            new_board[i][j] = RULES[board[i][j] as usize][count];
         }
     }
     new_board
@@ -95,10 +94,9 @@ fn main() {
             'p' => {
                 loop {
                     clear();
-                    board = play(&mut board);
-                    print_board(&board);
+                    board = play(&mut board); print_board(&board);
                     refresh();
-                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    std::thread::sleep(std::time::Duration::from_millis(200));
                 }
             },
             _ => {}
