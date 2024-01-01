@@ -1,8 +1,9 @@
 use rand::Rng;
 use ncurses::*;
+use std::io::Write;
 
-const HEIGHT: usize = 32;
-const WIDTH : usize = 64;
+const HEIGHT: usize = 480;
+const WIDTH : usize = 640;
 const RULES: [[i32; 9]; 2] = [[0, 0, 0, 1, 0, 0, 0, 0, 0], 
                               [0, 0, 1, 1, 0, 0, 0, 0, 0]];
 
@@ -62,6 +63,7 @@ fn _count_dump(board: &Vec<[i32; WIDTH]>) {
     }
 }
 
+
 fn play(board: &mut Vec<[i32; WIDTH]>) -> Vec<[i32; WIDTH]> {
     let mut new_board = vec![[0; WIDTH]; HEIGHT]; 
     for i in 0..HEIGHT {
@@ -71,6 +73,20 @@ fn play(board: &mut Vec<[i32; WIDTH]>) -> Vec<[i32; WIDTH]> {
         }
     }
     new_board
+}
+
+fn save_frame_as_ppm(board: &Vec<[i32; WIDTH]>, offset: usize){
+    let filename = format!("data/frame{}.ppm", offset);
+    let mut file = std::fs::File::create(filename).unwrap();
+    let header = format!("P3\n{} {}\n255\n", WIDTH, HEIGHT);
+    file.write_all(header.as_bytes()).unwrap();
+    for i in 0..HEIGHT {
+        for j in 0..WIDTH {
+            let color = if board[i][j] == 1 { "67 118 108" } else { "255 255 255" };
+            let line = format!("{}\n", color);
+            file.write_all(line.as_bytes()).unwrap();
+        }
+    }
 }
 
 fn main() {
@@ -92,11 +108,14 @@ fn main() {
                 refresh();
             },
             'p' => {
+                let mut _offset = 0;
                 loop {
                     clear();
                     board = play(&mut board); print_board(&board);
+                    save_frame_as_ppm(&board, _offset);
+                    _offset += 1;
                     refresh();
-                    std::thread::sleep(std::time::Duration::from_millis(200));
+                    std::thread::sleep(std::time::Duration::from_millis(50));
                 }
             },
             _ => {}
