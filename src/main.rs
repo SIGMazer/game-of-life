@@ -2,6 +2,9 @@ use rand::Rng;
 use ncurses::*;
 use std::io::Write;
 use raylib::prelude::*;
+use raylib::core::text::measure_text;
+use raylib::core::drawing::RaylibDrawHandle;
+use raylib::consts::KeyboardKey;
 
 const HEIGHT: usize = 256;
 const WIDTH : usize = 256;
@@ -9,12 +12,16 @@ use State::{Dead, Alive, Dying};
 const GOL: [[State; 9]; 2] = [[Dead, Dead, Dead, Alive, Dead, Dead, Dead, Dead, Dead], 
                               [Dead, Dead, Alive, Alive, Dead, Dead, Dead, Dead, Dead]];
 
-//brain's brain
 const BB: [[State; 9]; 3] = [[Dead, Dead, Alive, Dead, Dead, Dead, Dead, Dead, Dead], 
                              [Dying, Dying, Dying, Dying, Dying, Dying, Dying, Dying, Dying],
                              [Dead, Dead, Dead, Dead, Dead, Dead, Dead, Dead, Dead]];
                            
                            
+const SEED: [[State; 9]; 2] = [[Dead, Dead, Alive, Dead, Dead, Dead, Dead, Dead, Dead], 
+                               [Dead, Dead, Dead, Dead, Dead, Dead, Dead, Dead, Dead]];
+
+const DAYNIGHT: [[State; 9]; 2] = [[Dead, Dead, Dead, Alive, Dead, Dead, Alive, Alive, Alive], 
+                                   [Dead, Dead, Dead, Alive, Alive, Dead, Alive, Alive, Alive]];
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum State{
@@ -26,7 +33,9 @@ enum State{
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum Mode {
     GOL,
+    SEED,
     BB,
+    DAYNIGHT,
     
 }
 
@@ -110,6 +119,12 @@ fn play(board: &mut Vec<[State; WIDTH]>, mode: Mode) -> Vec<[State; WIDTH]> {
             } else if mode == Mode::BB {
                 new_board[i][j] = BB[idx][count];
             }
+            else if mode == Mode::SEED {
+                new_board[i][j] = SEED[idx][count];
+            }
+            else if mode == Mode::DAYNIGHT {
+                new_board[i][j] = DAYNIGHT[idx][count];
+            }
         }
     }
     new_board
@@ -127,19 +142,7 @@ fn _save_frame_as_ppm(board: &Vec<[i32; WIDTH]>, offset: usize){
         }
     }
 }
-
-fn main() {
-    let mut board = vec![[State::Dead; WIDTH]; HEIGHT]; 
-    fill_random_board(&mut board);
-
-    let (mut rl, thread) = raylib::init()
-        .size(1920, 1080)
-        .title("Game of Life")
-        .build();
-    let mut isplay = false;
-    let mut mode = Mode::BB;
-    while !rl.window_should_close() {
-        let mut d = rl.begin_drawing(&thread);
+fn fill_window(board: &Vec<[State; WIDTH]>, d: &mut RaylibDrawHandle ) {
         let color = Color::new(18, 18, 18, 18);
         d.clear_background(color);
         for i in 0..HEIGHT {
@@ -151,25 +154,143 @@ fn main() {
                 d.draw_rectangle((j*8) as i32, (i*4) as i32, 3, 3, color);
             }
         }
-        if isplay {
+}
+
+fn main() {
+    let mut board = vec![[State::Dead; WIDTH]; HEIGHT]; 
+    fill_random_board(&mut board);
+
+    let (mut rl, thread) = raylib::init()
+        .size(1280, 720)
+        .title("Game of Life")
+        .build();
+    rl.set_target_fps(60);
+    let mut isplay = false;
+    let mut iswin = true;
+    let mut mode = Mode::BB;
+    let height = rl.get_screen_height();
+    let width = rl.get_screen_width();
+    let menu_title = "Game of life";
+    let menu_items = vec![
+        "GOL",
+        "BB",
+        "SEED",
+        "DAYNIGHT",
+    ];
+    let menu_font_size = 60;
+    let title_font_size = 80;
+    let menu_padding = 10;
+    let mut selected = 0;
+    let bg = Color::new(18, 18, 18, 18);
+    while !rl.window_should_close() {
+        let mut d = rl.begin_drawing(&thread);
+        
+        if iswin{
+            d.clear_background(bg);
+            fill_window(&board, &mut d);
             board = play(&mut board, mode);
-        }
-        std::thread::sleep(std::time::Duration::from_millis(50));
-        if d.is_key_pressed(raylib::consts::KeyboardKey::KEY_Q) {
-            break;
-        }
-        if d.is_key_pressed(raylib::consts::KeyboardKey::KEY_R) {
-            fill_random_board(&mut board);
-        }
-        if d.is_key_pressed(raylib::consts::KeyboardKey::KEY_SPACE) {
-            isplay = !isplay; 
-        }
-        if d.is_key_pressed(raylib::consts::KeyboardKey::KEY_M) {
-            mode = match mode {
-                Mode::GOL => Mode::BB,
-                Mode::BB => Mode::GOL,
+            std::thread::sleep(std::time::Duration::from_millis(20));
+
+            d.draw_text(menu_title,
+                        (width - measure_text(menu_title, title_font_size))/2,
+                        50, title_font_size, Color::WHITE);
+
+
+            let menu_height =
+                (menu_items.len() as f32 * menu_font_size as f32 * 1.5 + (menu_items.len() - 1) as f32 * menu_padding as f32)
+                as i32;
+
+            let menu_start_y = height / 2 - menu_height / 2;
+
+            for (index, item) in menu_items.iter().enumerate(){
+                let item_y =
+                menu_start_y + (index as f32 * menu_font_size as f32 * 1.5 + index as f32 * menu_padding as f32) as i32;
+                let mut color = Color::WHITE;
+                if index == selected {
+                    color = Color::GOLD;
+                }
+
+                d.draw_text(item,
+                            (width - measure_text(item, menu_font_size))/2,
+                             item_y,
+                             menu_font_size,color); 
             }
         }
+        
+
+        
+        if isplay {
+            d.clear_background(bg);
+            fill_window(&board, &mut d);
+            board = play(&mut board, mode);
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        drop(d);
+        match rl.get_key_pressed(){
+            Some(key) => {
+                match key {
+                    KeyboardKey::KEY_UP => {
+                        if selected > 0 {
+                            selected -= 1;
+                        }
+                    }
+                    KeyboardKey::KEY_DOWN => {
+                        if selected < menu_items.len() - 1 {
+                            selected += 1;
+                        }
+                    }
+                    KeyboardKey::KEY_Q => {
+                        isplay = false;
+                        iswin = true;
+                    },
+                    KeyboardKey::KEY_SPACE => {
+                        isplay = !isplay;
+                    },
+                    KeyboardKey::KEY_R => {
+                        if isplay {
+                            board = vec![[State::Dead; WIDTH]; HEIGHT];
+                            fill_random_board(&mut board);
+                        }
+                    },
+                    KeyboardKey::KEY_ENTER => {
+                        match selected {
+                            0 => {
+                                board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                fill_random_board(&mut board);
+                                mode = Mode::GOL;
+                                iswin = false;
+                                isplay = true;
+                            }
+                            1 => {
+                                board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                fill_random_board(&mut board);
+                                mode = Mode::BB;
+                                iswin = false;
+                                isplay = true;
+                            },
+                            2 => {
+                                board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                fill_random_board(&mut board);
+                                mode = Mode::SEED;
+                                iswin = false;
+                                isplay = true;
+                            },
+                            3 => {
+                                board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                fill_random_board(&mut board);
+                                mode = Mode::DAYNIGHT;
+                                iswin = false;
+                                isplay = true;
+                            },
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            None => {}
+        }
+
     }
 }
 
