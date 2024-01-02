@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 rand = "0.8.4"
 ncurses = "5.101.0"
+raylib = "3.7.0"
