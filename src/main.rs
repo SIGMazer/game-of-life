@@ -5,10 +5,12 @@ use raylib::prelude::*;
 use raylib::core::text::measure_text;
 use raylib::core::drawing::RaylibDrawHandle;
 use raylib::consts::KeyboardKey;
+use raylib::color::Color;
+use image::{GenericImageView,Rgba};
 
-const HEIGHT: usize = 256;
-const WIDTH : usize = 256;
-use State::{Dead, Alive, Dying};
+const HEIGHT: usize = 800;
+const WIDTH : usize = 600;
+use State::{Dead, Alive, Dying, Conductor};
 const GOL: [[State; 9]; 2] = [[Dead, Dead, Dead, Alive, Dead, Dead, Dead, Dead, Dead], 
                               [Dead, Dead, Alive, Alive, Dead, Dead, Dead, Dead, Dead]];
 
@@ -23,11 +25,18 @@ const SEED: [[State; 9]; 2] = [[Dead, Dead, Alive, Dead, Dead, Dead, Dead, Dead,
 const DAYNIGHT: [[State; 9]; 2] = [[Dead, Dead, Dead, Alive, Dead, Dead, Alive, Alive, Alive], 
                                    [Dead, Dead, Dead, Alive, Alive, Dead, Alive, Alive, Alive]];
 
+
+const WIREWORLD: [[State; 9]; 4] = [[Dead, Dead, Dead, Alive, Dead, Dead, Alive, Alive, Alive], 
+                                    [Dying, Dying, Dying, Dying, Dying, Dying, Dying, Dying, Dying],
+                                    [Conductor, Conductor, Conductor, Conductor, Conductor, Conductor, Conductor, Conductor, Conductor],
+                                    [Conductor, Alive, Alive, Conductor, Conductor, Conductor, Conductor, Conductor, Conductor]];
+
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum State{
     Dead,
     Alive,
     Dying,
+    Conductor,
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -36,6 +45,7 @@ enum Mode {
     SEED,
     BB,
     DAYNIGHT,
+    WIREWORLD,
     
 }
 
@@ -45,6 +55,7 @@ impl State {
             State::Dead => 0,
             State::Alive => 1,
             State::Dying => 2,
+            State::Conductor => 3,
         }
     }
 }
@@ -125,6 +136,9 @@ fn play(board: &mut Vec<[State; WIDTH]>, mode: Mode) -> Vec<[State; WIDTH]> {
             else if mode == Mode::DAYNIGHT {
                 new_board[i][j] = DAYNIGHT[idx][count];
             }
+            else {
+                new_board[i][j] = WIREWORLD[idx][count];
+            }
         }
     }
     new_board
@@ -149,6 +163,7 @@ fn fill_window(board: &Vec<[State; WIDTH]>, d: &mut RaylibDrawHandle ) {
             for j in 0..WIDTH {
                 let color = if board[i][j] == Alive { Color::new(22, 255, 0, 255) }
                     else if board[i][j] == Dying { Color::new(15, 98, 146, 255) }
+                    else if board[i][j] == Conductor { Color::new(255, 237, 0, 255) }
                     else {color };
 
                 d.draw_rectangle((j*8) as i32, (i*4) as i32, 3, 3, color);
@@ -176,8 +191,9 @@ fn main() {
         "BB",
         "SEED",
         "DAYNIGHT",
+        "WIREWORLD"
     ];
-    let menu_font_size = 60;
+    let menu_font_size = 55;
     let title_font_size = 80;
     let menu_padding = 10;
     let mut selected = 0;
@@ -189,7 +205,6 @@ fn main() {
             d.clear_background(bg);
             fill_window(&board, &mut d);
             board = play(&mut board, mode);
-            std::thread::sleep(std::time::Duration::from_millis(20));
 
             d.draw_text(menu_title,
                         (width - measure_text(menu_title, title_font_size))/2,
@@ -200,7 +215,7 @@ fn main() {
                 (menu_items.len() as f32 * menu_font_size as f32 * 1.5 + (menu_items.len() - 1) as f32 * menu_padding as f32)
                 as i32;
 
-            let menu_start_y = height / 2 - menu_height / 2;
+            let menu_start_y = height / 2 - menu_height / 2 + 40;
 
             for (index, item) in menu_items.iter().enumerate(){
                 let item_y =
@@ -223,7 +238,6 @@ fn main() {
             d.clear_background(bg);
             fill_window(&board, &mut d);
             board = play(&mut board, mode);
-            std::thread::sleep(std::time::Duration::from_millis(20));
         }
         drop(d);
         match rl.get_key_pressed(){
@@ -279,6 +293,13 @@ fn main() {
                                 board = vec![[State::Dead; WIDTH]; HEIGHT];
                                 fill_random_board(&mut board);
                                 mode = Mode::DAYNIGHT;
+                                iswin = false;
+                                isplay = true;
+                            },
+                            4 => {
+                                board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                fill_random_board(&mut board);
+                                mode = Mode::WIREWORLD;
                                 iswin = false;
                                 isplay = true;
                             },
