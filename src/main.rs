@@ -6,10 +6,9 @@ use raylib::core::text::measure_text;
 use raylib::core::drawing::RaylibDrawHandle;
 use raylib::consts::KeyboardKey;
 use raylib::color::Color;
-use image::{GenericImageView,Rgba};
 
-const HEIGHT: usize = 800;
-const WIDTH : usize = 600;
+const HEIGHT: usize = 256;
+const WIDTH : usize = 256;
 use State::{Dead, Alive, Dying, Conductor};
 const GOL: [[State; 9]; 2] = [[Dead, Dead, Dead, Alive, Dead, Dead, Dead, Dead, Dead], 
                               [Dead, Dead, Alive, Alive, Dead, Dead, Dead, Dead, Dead]];
@@ -205,6 +204,7 @@ fn main() {
             d.clear_background(bg);
             fill_window(&board, &mut d);
             board = play(&mut board, mode);
+            std::thread::sleep(std::time::Duration::from_millis(20));
 
             d.draw_text(menu_title,
                         (width - measure_text(menu_title, title_font_size))/2,
@@ -238,6 +238,7 @@ fn main() {
             d.clear_background(bg);
             fill_window(&board, &mut d);
             board = play(&mut board, mode);
+            std::thread::sleep(std::time::Duration::from_millis(20));
         }
         drop(d);
         match rl.get_key_pressed(){
