@@ -1,5 +1,4 @@
 use rand::Rng;
-use ncurses::*;
 use std::io::Write;
 use raylib::prelude::*;
 use raylib::core::text::measure_text;
@@ -56,22 +55,6 @@ impl State {
             State::Dying => 2,
             State::Conductor => 3,
         }
-    }
-}
-
-fn _print_board(board: &Vec<[State; WIDTH]>) {
-    for i in 0..HEIGHT {
-        for j in 0..WIDTH {
-            if board[i][j] == State::Dead {
-                addstr("-");
-            } if board[i][j] == State::Alive {
-                addstr("#");
-            } if board[i][j] == State::Dying {
-                addstr("X");
-            }
-
-        }
-        addstr("\n");
     }
 }
 
