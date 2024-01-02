@@ -228,12 +228,12 @@ fn main() {
             Some(key) => {
                 match key {
                     KeyboardKey::KEY_UP => {
-                        if selected > 0 {
+                        if selected > 0 && iswin {
                             selected -= 1;
                         }
                     }
                     KeyboardKey::KEY_DOWN => {
-                        if selected < menu_items.len() - 1 {
+                        if selected < menu_items.len() - 1 && iswin {
                             selected += 1;
                         }
                     }
@@ -251,43 +251,45 @@ fn main() {
                         }
                     },
                     KeyboardKey::KEY_ENTER => {
-                        match selected {
-                            0 => {
-                                board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                fill_random_board(&mut board);
-                                mode = Mode::GOL;
-                                iswin = false;
-                                isplay = true;
+                        if iswin {
+                            match selected {
+                                0 => {
+                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                    fill_random_board(&mut board);
+                                    mode = Mode::GOL;
+                                    iswin = false;
+                                    isplay = true;
+                                }
+                                1 => {
+                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                    fill_random_board(&mut board);
+                                    mode = Mode::BB;
+                                    iswin = false;
+                                    isplay = true;
+                                },
+                                2 => {
+                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                    fill_random_board(&mut board);
+                                    mode = Mode::SEED;
+                                    iswin = false;
+                                    isplay = true;
+                                },
+                                3 => {
+                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                    fill_random_board(&mut board);
+                                    mode = Mode::DAYNIGHT;
+                                    iswin = false;
+                                    isplay = true;
+                                },
+                                4 => {
+                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                    fill_random_board(&mut board);
+                                    mode = Mode::WIREWORLD;
+                                    iswin = false;
+                                    isplay = true;
+                                },
+                                _ => {}
                             }
-                            1 => {
-                                board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                fill_random_board(&mut board);
-                                mode = Mode::BB;
-                                iswin = false;
-                                isplay = true;
-                            },
-                            2 => {
-                                board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                fill_random_board(&mut board);
-                                mode = Mode::SEED;
-                                iswin = false;
-                                isplay = true;
-                            },
-                            3 => {
-                                board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                fill_random_board(&mut board);
-                                mode = Mode::DAYNIGHT;
-                                iswin = false;
-                                isplay = true;
-                            },
-                            4 => {
-                                board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                fill_random_board(&mut board);
-                                mode = Mode::WIREWORLD;
-                                iswin = false;
-                                isplay = true;
-                            },
-                            _ => {}
                         }
                     }
                     _ => {}
