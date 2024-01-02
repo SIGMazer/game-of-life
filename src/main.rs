@@ -5,6 +5,7 @@ use raylib::core::text::measure_text;
 use raylib::core::drawing::RaylibDrawHandle;
 use raylib::consts::KeyboardKey;
 use raylib::color::Color;
+use std::collections::HashMap;
 
 const HEIGHT: usize = 256;
 const WIDTH : usize = 256;
@@ -29,7 +30,10 @@ const WIREWORLD: [[State; 9]; 4] = [[Dead, Dead, Dead, Alive, Dead, Dead, Alive,
                                     [Conductor, Conductor, Conductor, Conductor, Conductor, Conductor, Conductor, Conductor, Conductor],
                                     [Conductor, Alive, Alive, Conductor, Conductor, Conductor, Conductor, Conductor, Conductor]];
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+//rule110 pattern 
+const RULE110: [(usize, State); 8] = [(111, Dead), (110, Alive), (101, Alive), (100, Dead), (011, Alive), (010, Alive), (001, Alive),(000, Dead)];
+
+#[derive(Copy, Clone, PartialEq, Debug, Eq, Hash)]
 enum State{
     Dead,
     Alive,
@@ -44,6 +48,7 @@ enum Mode {
     BB,
     DAYNIGHT,
     WIREWORLD,
+    Rule110,
     
 }
 
@@ -118,9 +123,25 @@ fn play(board: &mut Vec<[State; WIDTH]>, mode: Mode) -> Vec<[State; WIDTH]> {
             else if mode == Mode::DAYNIGHT {
                 new_board[i][j] = DAYNIGHT[idx][count];
             }
-            else {
+            else if mode == Mode::WIREWORLD {
                 new_board[i][j] = WIREWORLD[idx][count];
             }
+            else if mode == Mode::Rule110 {
+                let mut rule = HashMap::new();
+                for (key, value) in RULE110.iter() {
+                    rule.insert(key, value);
+                }
+                let mut key = 0;
+                if i > 0 {
+                    key += board[i-1][j].as_usize() * 100;
+                }
+                key += board[i][j].as_usize() * 10;
+                if i < HEIGHT-1 {
+                    key += board[i+1][j].as_usize();
+                }
+                new_board[i][j] = **rule.get(&key).unwrap();
+            }
+
         }
     }
     new_board
@@ -173,7 +194,8 @@ fn main() {
         "BB",
         "SEED",
         "DAYNIGHT",
-        "WIREWORLD"
+        "WIREWORLD",
+        "RULE110",
     ];
     let menu_font_size = 55;
     let title_font_size = 80;
@@ -288,8 +310,16 @@ fn main() {
                                     iswin = false;
                                     isplay = true;
                                 },
+                                5 => {
+                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
+                                    fill_random_board(&mut board);
+                                    mode = Mode::Rule110;
+                                    iswin = false;
+                                    isplay = true;
+                                },
                                 _ => {}
                             }
+
                         }
                     }
                     _ => {}
