@@ -4,7 +4,7 @@ Simple implementation of game of life.
 
 ![demo](./demo.gif)
 
-![demo](./demo.mp4)
+https://github.com/SIGMazer/test/assets/88988252/cd0e87c2-df8e-40fe-8c12-185caf4b469b
 
 ## Quick start
 ```console
