@@ -6,7 +6,7 @@ use raylib::core::drawing::RaylibDrawHandle;
 use raylib::consts::KeyboardKey;
 use raylib::color::Color;
 use std::collections::HashMap;
-
+use raylib::core::audio::RaylibAudio;
 const HEIGHT: usize = 256;
 const WIDTH : usize = 256;
 use State::{Dead, Alive, Dying, Conductor};
@@ -174,6 +174,7 @@ fn fill_window(board: &Vec<[State; WIDTH]>, d: &mut RaylibDrawHandle ) {
         }
 }
 
+
 fn main() {
     let mut board = vec![[State::Dead; WIDTH]; HEIGHT]; 
     fill_random_board(&mut board);
@@ -197,11 +198,19 @@ fn main() {
         "WIREWORLD",
         "RULE110",
     ];
-    let menu_font_size = 55;
+    let menu_font_size = 50;
     let title_font_size = 80;
     let menu_padding = 10;
     let mut selected = 0;
     let bg = Color::new(18, 18, 18, 18);
+
+    let mut rlm = RaylibAudio::init_audio_device();
+    let mut sound = raylib::core::audio::Sound::load_sound("music.mp3").unwrap();
+    rlm.play_sound(&mut sound);
+    rlm.set_master_volume(0.5);
+
+    
+
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
         
@@ -220,7 +229,7 @@ fn main() {
                 (menu_items.len() as f32 * menu_font_size as f32 * 1.5 + (menu_items.len() - 1) as f32 * menu_padding as f32)
                 as i32;
 
-            let menu_start_y = height / 2 - menu_height / 2 + 40;
+            let menu_start_y = height / 2 - menu_height / 2 + 65;
 
             for (index, item) in menu_items.iter().enumerate(){
                 let item_y =
@@ -245,7 +254,9 @@ fn main() {
             board = play(&mut board, mode);
             std::thread::sleep(std::time::Duration::from_millis(20));
         }
+
         drop(d);
+
         match rl.get_key_pressed(){
             Some(key) => {
                 match key {
