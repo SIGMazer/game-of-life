@@ -7,8 +7,14 @@ use raylib::consts::KeyboardKey;
 use raylib::color::Color;
 use std::collections::HashMap;
 use raylib::core::audio::RaylibAudio;
+
 const HEIGHT: usize = 256;
 const WIDTH : usize = 256;
+const alive_color: Color = Color::new(22, 255, 0, 255);
+const dying_color: Color = Color::new(15, 98, 146, 255);
+const conductor_color: Color = Color::new(255, 237, 0, 255);
+const dead_color: Color = Color::new(18, 18, 18, 18);
+
 use State::{Dead, Alive, Dying, Conductor};
 const GOL: [[State; 9]; 2] = [[Dead, Dead, Dead, Alive, Dead, Dead, Dead, Dead, Dead], 
                               [Dead, Dead, Alive, Alive, Dead, Dead, Dead, Dead, Dead]];
@@ -177,18 +183,29 @@ fn _save_frame_as_ppm(board: &Vec<[i32; WIDTH]>, offset: usize){
     }
 }
 fn fill_window(board: &Vec<[State; WIDTH]>, d: &mut RaylibDrawHandle ) {
-        let color = Color::new(18, 18, 18, 18);
-        d.clear_background(color);
-        for i in 0..HEIGHT {
-            for j in 0..WIDTH {
-                let color = if board[i][j] == Alive { Color::new(22, 255, 0, 255) }
-                    else if board[i][j] == Dying { Color::new(15, 98, 146, 255) }
-                    else if board[i][j] == Conductor { Color::new(255, 237, 0, 255) }
-                    else {color };
+    let color = Color::new(18, 18, 18, 18);
+    d.clear_background(color);
+    for i in 0..HEIGHT {
+        for j in 0..WIDTH {
+            let color = match board[i][j] {
+                State::Alive => alive_color,
+                State::Dying => dying_color,
+                State::Conductor => conductor_color,
+                State::Dead => dead_color,
+            };
 
-                    d.draw_rectangle((j*8) as i32, (i*4) as i32, 3, 3, color);
-            }
+            d.draw_rectangle((j*8) as i32, (i*4) as i32, 3, 3, color);
         }
+    }
+    
+    let grid_color = Color::new(0, 0, 0, 255);
+    for i in 0..HEIGHT {
+        d.draw_line(0, (i*4) as i32, WIDTH as i32 * 8, (i*4) as i32, grid_color);
+    }
+    for i in 0..WIDTH {
+        d.draw_line((i*8) as i32, 0, (i*8) as i32, HEIGHT as i32 * 4, grid_color);
+    }
+    
 }
 
 fn sandbox(board: &mut Vec<[State; WIDTH]>,d: &mut RaylibDrawHandle){
@@ -216,6 +233,7 @@ fn normalise_board(board: &mut Vec<[State; WIDTH]>) {
         }
     }
 }
+
 
 fn main() {
     let mut board = vec![[State::Dead; WIDTH]; HEIGHT]; 
