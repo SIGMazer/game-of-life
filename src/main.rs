@@ -224,13 +224,14 @@ fn main() {
     let (mut rl, thread) = raylib::init()
         .size(1280, 720)
         .title("Game of Life")
+        .resizable()
         .build();
     rl.set_target_fps(60);
+
+
     let mut isplay = false;
     let mut iswin = true;
     let mut mode = Mode::BB;
-    let height = rl.get_screen_height();
-    let width = rl.get_screen_width();
     let menu_title = "Game of life";
     let menu_items = vec![
         "GOL",
@@ -249,6 +250,7 @@ fn main() {
     modes.insert(3, Mode::DAYNIGHT);
     modes.insert(4, Mode::WIREWORLD);
     modes.insert(5, Mode::Rule110);
+
     let menu_font_size = 50;
     let title_font_size = 80;
     let menu_padding = 10;
@@ -263,9 +265,12 @@ fn main() {
         });
     rlm.play_sound(&mut sound);
     rlm.set_master_volume(0.3);
-
+    
 
     while !rl.window_should_close() {
+        let height = rl.get_screen_height();
+        let width = rl.get_screen_width();
+
         let mut d = rl.begin_drawing(&thread);
         
         if !rlm.is_sound_playing(&sound) {
