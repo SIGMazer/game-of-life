@@ -205,15 +205,22 @@ fn main() {
     let bg = Color::new(18, 18, 18, 18);
 
     let mut rlm = RaylibAudio::init_audio_device();
-    let mut sound = raylib::core::audio::Sound::load_sound("music.mp3").unwrap();
+    let mut  sound = raylib::core::audio::Sound::load_sound("music.mp3")
+        .unwrap_or_else(|err| {
+            panic!("Failed to load sound: {}", err);
+        });
     rlm.play_sound(&mut sound);
     rlm.set_master_volume(0.5);
 
-    
+
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
         
+        if !rlm.is_sound_playing(&sound) {
+            rlm.play_sound(&mut sound);
+        }
+
         if iswin{
             d.clear_background(bg);
             fill_window(&board, &mut d);
