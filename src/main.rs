@@ -207,9 +207,18 @@ fn sandbox(board: &mut Vec<[State; WIDTH]>,d: &mut RaylibDrawHandle){
     
 }
 
+fn normalise_board(board: &mut Vec<[State; WIDTH]>) {
+    for i in 0..HEIGHT {
+        for j in 0..WIDTH {
+            if board[i][j] != Alive{
+                board[i][j] = Dead;
+            }
+        }
+    }
+}
+
 fn main() {
     let mut board = vec![[State::Dead; WIDTH]; HEIGHT]; 
-    let mut sandbox_board = vec![[State::Dead; WIDTH]; HEIGHT];
     fill_random_board(&mut board);
 
     let (mut rl, thread) = raylib::init()
@@ -295,20 +304,21 @@ fn main() {
             }
         }
         
-        d.draw_text(&mode.to_string(), 0, 0, 32, Color::WHITE);
         if game_mode == GameMode::Sandbox {
-            sandbox(&mut sandbox_board, &mut d);
+            d.draw_text(&mode.to_string(), 0, 0, 32, Color::WHITE);
+            sandbox(&mut board, &mut d);
         }
         
         if isplay {
             d.clear_background(bg);
-            fill_window(&sandbox_board, &mut d);
+            d.draw_text(&mode.to_string(), 0, 0, 32, Color::WHITE);
+            fill_window(&board, &mut d);
             match game_mode{
                 GameMode::Normal => {
                     board = play(&mut board, mode);
                 },
                 GameMode::Sandbox => {
-                    sandbox_board = play(&mut sandbox_board, mode);
+                    board = play(&mut board, mode);
                 } 
             }
             std::thread::sleep(std::time::Duration::from_millis(20));
@@ -351,6 +361,7 @@ fn main() {
                                 selected = 0;
                             }
                             mode = *modes.get(&selected).unwrap();
+                            normalise_board(&mut board);
                         }
                     },
                     KeyboardKey::KEY_J=> {
@@ -361,6 +372,7 @@ fn main() {
                                 selected = menu_items.len() - 2;
                             }
                             mode = *modes.get(&selected).unwrap();
+                            normalise_board(&mut board);
                         }
                     },
                     KeyboardKey::KEY_R => {
@@ -369,13 +381,21 @@ fn main() {
                             fill_random_board(&mut board);
                         }
                     },
+                    KeyboardKey::KEY_D =>{
+                        if isplay {
+                            board = vec![[State::Dead; WIDTH]; HEIGHT];
+                        }
+                    }
                     KeyboardKey::KEY_ENTER => {
                         if iswin {
                             if selected == menu_items.len() - 1 {
                                 game_mode = GameMode::Sandbox;
+                                board = vec![[State::Dead; WIDTH]; HEIGHT];
                                 iswin = false;
                             }else {
                                 mode = *modes.get(&selected).unwrap();
+                                normalise_board(&mut board);
+                                game_mode = GameMode::Normal;
                                 isplay = true;
                                 iswin = false;
                             }
