@@ -2,6 +2,10 @@
 
 Simple implementation of game of life.
 
+
+[![wakatime](https://wakatime.com/badge/user/018c8e53-96d3-4c2b-a3bf-edd2581da275/project/018cc630-f903-49eb-93c5-e82c7c96d7e9.svg)](https://wakatime.com/badge/user/018c8e53-96d3-4c2b-a3bf-edd2581da275/project/018cc630-f903-49eb-93c5-e82c7c96d7e9)
+
+
 | :warning: WARNING          |
 |:---------------------------|
 | This video is not up to date please check out the release.     |
