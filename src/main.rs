@@ -324,6 +324,13 @@ fn main() {
             rlm.play_sound(&mut sound);
         }
 
+        if game_mode == GameMode::Sandbox {
+            sandbox(&mut board, &mut d);
+            if !iswin{
+                d.draw_text(&mode.to_string(), 0, 0, 32, Color::WHITE);
+            }
+        }
+
         if iswin {
             d.clear_background(bg);
             fill_window(&board, &mut d);
@@ -361,17 +368,14 @@ fn main() {
                     color,
                 );
             }
+            
         }
 
-        if game_mode == GameMode::Sandbox {
-            d.draw_text(&mode.to_string(), 0, 0, 32, Color::WHITE);
-            sandbox(&mut board, &mut d);
-        }
 
         if isplay {
             d.clear_background(bg);
-            d.draw_text(&mode.to_string(), 0, 0, 32, Color::WHITE);
             fill_window(&board, &mut d);
+            d.draw_text(&mode.to_string(), 0, 0, 32, Color::WHITE);
             match game_mode {
                 GameMode::Normal => {
                     board = play(&mut board, mode);
