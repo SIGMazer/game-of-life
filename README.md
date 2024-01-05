@@ -24,3 +24,5 @@ $ cargo run
 |<kbd>q</kbd>|Quit to main menu |
 |<kbd>Space</kbd>|Pause the game|
 |<kbd>Enter</kbd>|Perform an action on the highlighted UI element|
+|<kbd>mouse_left</kbd>|Make the cell alive in sandbox mode|
+|<kbd>mouse_right</kbd>|Make the cell die in sandbox mode |
