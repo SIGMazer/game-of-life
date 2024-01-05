@@ -52,6 +52,25 @@ enum Mode {
     
 }
 
+impl Mode {
+    fn to_string(&self) -> String {
+        match self {
+            Mode::GOL => "GOL".to_string(),
+            Mode::SEED => "SEED".to_string(),
+            Mode::BB => "BB".to_string(),
+            Mode::DAYNIGHT => "DAYNIGHT".to_string(),
+            Mode::WIREWORLD => "WIREWORLD".to_string(),
+            Mode::Rule110 => "Rule110".to_string(),
+        }
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+enum GameMode {
+    Normal,
+    Sandbox,
+}
+
 impl State {
     fn as_usize(&self) -> usize {
         match self {
@@ -104,8 +123,6 @@ fn _count_dump(board: &Vec<[State; WIDTH]>) {
         }
     }
 }
-
-
 fn play(board: &mut Vec<[State; WIDTH]>, mode: Mode) -> Vec<[State; WIDTH]> {
     let mut new_board = vec![[Dead; WIDTH]; HEIGHT]; 
     for i in 0..HEIGHT {
@@ -169,14 +186,30 @@ fn fill_window(board: &Vec<[State; WIDTH]>, d: &mut RaylibDrawHandle ) {
                     else if board[i][j] == Conductor { Color::new(255, 237, 0, 255) }
                     else {color };
 
-                d.draw_rectangle((j*8) as i32, (i*4) as i32, 3, 3, color);
+                    d.draw_rectangle((j*8) as i32, (i*4) as i32, 3, 3, color);
             }
         }
 }
 
+fn sandbox(board: &mut Vec<[State; WIDTH]>,d: &mut RaylibDrawHandle){
+    let color = Color::new(18, 18, 18, 18);
+    d.clear_background(color);
+    let mouse = d.get_mouse_position();
+    let x = mouse.x as usize / 8;
+    let y = mouse.y as usize / 4;
+    if d.is_mouse_button_down(MouseButton::MOUSE_LEFT_BUTTON) {
+        board[y][x] = State::Alive;
+    }
+    if d.is_mouse_button_pressed(MouseButton::MOUSE_RIGHT_BUTTON) {
+        board[y][x] = State::Dead;
+    }
+    fill_window(&board, d);
+    
+}
 
 fn main() {
     let mut board = vec![[State::Dead; WIDTH]; HEIGHT]; 
+    let mut sandbox_board = vec![[State::Dead; WIDTH]; HEIGHT];
     fill_random_board(&mut board);
 
     let (mut rl, thread) = raylib::init()
@@ -197,12 +230,22 @@ fn main() {
         "DAYNIGHT",
         "WIREWORLD",
         "RULE110",
+        "SandBox"
     ];
+
+    let mut modes: HashMap<usize, Mode> = HashMap::new();
+    modes.insert(0, Mode::GOL);
+    modes.insert(1, Mode::BB);
+    modes.insert(2, Mode::SEED);
+    modes.insert(3, Mode::DAYNIGHT);
+    modes.insert(4, Mode::WIREWORLD);
+    modes.insert(5, Mode::Rule110);
     let menu_font_size = 50;
     let title_font_size = 80;
     let menu_padding = 10;
     let mut selected = 0;
     let bg = Color::new(18, 18, 18, 18);
+    let mut game_mode = GameMode::Normal;
 
     let mut rlm = RaylibAudio::init_audio_device();
     let mut  sound = raylib::core::audio::Sound::load_sound("music.mp3")
@@ -210,8 +253,7 @@ fn main() {
             panic!("Failed to load sound: {}", err);
         });
     rlm.play_sound(&mut sound);
-    rlm.set_master_volume(0.5);
-
+    rlm.set_master_volume(0.3);
 
 
     while !rl.window_should_close() {
@@ -253,12 +295,22 @@ fn main() {
             }
         }
         
-
+        d.draw_text(&mode.to_string(), 0, 0, 32, Color::WHITE);
+        if game_mode == GameMode::Sandbox {
+            sandbox(&mut sandbox_board, &mut d);
+        }
         
         if isplay {
             d.clear_background(bg);
-            fill_window(&board, &mut d);
-            board = play(&mut board, mode);
+            fill_window(&sandbox_board, &mut d);
+            match game_mode{
+                GameMode::Normal => {
+                    board = play(&mut board, mode);
+                },
+                GameMode::Sandbox => {
+                    sandbox_board = play(&mut sandbox_board, mode);
+                } 
+            }
             std::thread::sleep(std::time::Duration::from_millis(20));
         }
 
@@ -267,14 +319,19 @@ fn main() {
         match rl.get_key_pressed(){
             Some(key) => {
                 match key {
-                    KeyboardKey::KEY_UP => {
+                    KeyboardKey::KEY_W=> {
                         if selected > 0 && iswin {
                             selected -= 1;
+                        }else if selected == 0 && iswin {
+                            selected = menu_items.len() - 1;
                         }
                     }
-                    KeyboardKey::KEY_DOWN => {
+                    KeyboardKey::KEY_S=> {
                         if selected < menu_items.len() - 1 && iswin {
                             selected += 1;
+                        }else if selected == menu_items.len() - 1 && iswin {
+                            selected = 0;
+
                         }
                     }
                     KeyboardKey::KEY_Q => {
@@ -282,7 +339,29 @@ fn main() {
                         iswin = true;
                     },
                     KeyboardKey::KEY_SPACE => {
-                        isplay = !isplay;
+                        if !iswin {
+                            isplay = !isplay;
+                        }
+                    },
+                    KeyboardKey::KEY_K=> {
+                        if !iswin{
+                            if selected < menu_items.len() - 2 {
+                                selected += 1;
+                            }else if selected >= menu_items.len() - 2{
+                                selected = 0;
+                            }
+                            mode = *modes.get(&selected).unwrap();
+                        }
+                    },
+                    KeyboardKey::KEY_J=> {
+                        if !iswin{
+                            if selected > 0 {
+                                selected -= 1;
+                            }else if selected == 0{
+                                selected = menu_items.len() - 2;
+                            }
+                            mode = *modes.get(&selected).unwrap();
+                        }
                     },
                     KeyboardKey::KEY_R => {
                         if isplay {
@@ -292,52 +371,14 @@ fn main() {
                     },
                     KeyboardKey::KEY_ENTER => {
                         if iswin {
-                            match selected {
-                                0 => {
-                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                    fill_random_board(&mut board);
-                                    mode = Mode::GOL;
-                                    iswin = false;
-                                    isplay = true;
-                                }
-                                1 => {
-                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                    fill_random_board(&mut board);
-                                    mode = Mode::BB;
-                                    iswin = false;
-                                    isplay = true;
-                                },
-                                2 => {
-                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                    fill_random_board(&mut board);
-                                    mode = Mode::SEED;
-                                    iswin = false;
-                                    isplay = true;
-                                },
-                                3 => {
-                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                    fill_random_board(&mut board);
-                                    mode = Mode::DAYNIGHT;
-                                    iswin = false;
-                                    isplay = true;
-                                },
-                                4 => {
-                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                    fill_random_board(&mut board);
-                                    mode = Mode::WIREWORLD;
-                                    iswin = false;
-                                    isplay = true;
-                                },
-                                5 => {
-                                    board = vec![[State::Dead; WIDTH]; HEIGHT];
-                                    fill_random_board(&mut board);
-                                    mode = Mode::Rule110;
-                                    iswin = false;
-                                    isplay = true;
-                                },
-                                _ => {}
+                            if selected == menu_items.len() - 1 {
+                                game_mode = GameMode::Sandbox;
+                                iswin = false;
+                            }else {
+                                mode = *modes.get(&selected).unwrap();
+                                isplay = true;
+                                iswin = false;
                             }
-
                         }
                     }
                     _ => {}

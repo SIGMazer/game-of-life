@@ -15,7 +15,8 @@ $ cargo run
 
 |Keys|Description|
 |---|---|
-|<kbd>arrow_down</kbd>, <kbd>arrow_up</kbd>|Move cursor up and down|
+|<kbd>w</kbd>, <kbd>s</kbd>|Move cursor up and down|
+|<kbd>j</kbd>, <kbd>k</kbd>|Switch betwean modes|
 |<kbd>r</kbd>|Reset the board|
 |<kbd>q</kbd>|Quit to main menu |
 |<kbd>Space</kbd>|Pause the game|
